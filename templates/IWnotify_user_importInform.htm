@@ -1,0 +1,23 @@
+{include file="IWnotify_user_menu.htm"}
+<h2>{gt text="Import a notify inform. Step 2 - Select the inform xml file"}</h2>
+<form class="z-form" id="importFileForm" method="post" enctype="multipart/form-data" action="{modurl modname='IWnotify' type='user' func='createNotify'}">
+    <input type="hidden" name="csrftoken" value="{insert name='csrftoken'}" />
+    <input type="hidden" name="notifyId" value="{$notify.notifyId}" />
+    <input type="hidden" name="step" value="2" />
+    <div class="z-formrow">
+        <label id="notify_xmlFile">{gt text="XML import file"}</label>
+        <input type="file" name="importFile" />
+    </div>
+    <div class="z-center">
+        <span class="z-buttons">
+            <a title="Import" onClick="javascript:document.forms['importFileForm'].submit();">
+                {img modname='core' src='button_ok.png' set='icons/small' __alt="Import" __title="Import"} {gt text="Import"}
+            </a>
+        </span>
+        <span class="z-buttons">
+            <a href="{modurl modname=IWforms type=admin func=main}">
+                {img modname='core' src='button_cancel.png' set='icons/small' __alt="Cancel" __title="Cancel"} {gt text="Cancel"}
+            </a>
+        </span>
+    </div>
+</form>

@@ -1,0 +1,23 @@
+{include file="IWnotify_user_menu.htm"}
+
+<table class="z-datatable">
+    {foreach item='notify' from=$notifies}
+    <tr>
+        <td>
+            {$notify.notifyTitle}
+        </td>
+        <td>
+            {$notify.notifyDescription}
+        </td>
+        <td>
+            {gt text="Access form"}
+        </td>
+    </tr>
+    {foreachelse}
+    <tr>
+        <td colspan="3">
+            {gt text="No notify informs defined."}
+        </td>
+    </tr>
+    {/foreach}
+</table>

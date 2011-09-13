@@ -23,6 +23,7 @@ function IWnotify_tables() {
         'notifyCloseMsg' => 'iw_notifyCloseMsg',
         'notifyReturnUrl' => 'iw_notifyReturnUrl',
         'notifyOnlyOnceVisit' => 'iw_notifyOnlyOnceVisit',
+        'notifyFailsMsg' => 'iw_notifyFailsMsg',
     );
 
     $tables['IWnotify_definition_column_def'] = array('notifyId' => "I NOTNULL AUTO PRIMARY",
@@ -37,6 +38,7 @@ function IWnotify_tables() {
         'notifyCloseMsg' => "X NOTNULL",
         'notifyReturnUrl' => "C(180) NOTNULL DEFAULT ''",
         'notifyOnlyOnceVisit' => "I(1) NOTNULL DEFAULT '0'",
+        'notifyFailsMsg' => "X NOTNULL",
     );
 
     ObjectUtil::addStandardFieldsToTableDefinition($tables['IWnotify_definition_column'], 'pn_');
@@ -94,13 +96,13 @@ function IWnotify_tables() {
     $tables['IWnotify_logs'] = DBUtil::getLimitedTablename('IWnotify_logs');
     $tables['IWnotify_logs_column'] = array('notifyLogId' => 'iw_notifyLogId',
         'notifyId' => 'iw_notifyId',
-        'notifyLodDate' => 'iw_notifyLodDate',
+        'notifyLogDate' => 'iw_notifyLodDate',
         'notifyLogIp' => 'iw_notifyLogIp',
     );
 
     $tables['IWnotify_logs_column_def'] = array('notifyLogId' => "I NOTNULL AUTO PRIMARY",
         'notifyId' => "I NOTNULL DEFAULT '0'",
-        'notifyLodDate' => "T DEFDATETIME NOTNULL DEFAULT '1970-01-01 00:00:00'",
+        'notifyLogDate' => "T DEFDATETIME NOTNULL DEFAULT '1970-01-01 00:00:00'",
         'notifyLogIp' => "C(15) NOTNULL DEFAULT ''",
     );
 

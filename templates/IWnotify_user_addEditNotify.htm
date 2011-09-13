@@ -1,0 +1,119 @@
+<link rel="stylesheet" href="modules/IWmain/js/calendar/css/jscal2.css" type="text/css" />
+<link rel="stylesheet" href="modules/IWmain/js/calendar/css/border-radius.css" type="text/css" />
+<link rel="stylesheet" href="modules/IWmain/js/calendar/css/style.css" type="text/css" />
+<script type="text/javascript" src="modules/IWmain/js/calendar/jscal2.js"></script>
+<script type="text/javascript" src="modules/IWmain/js/calendar/lang/ca.js"></script>
+
+{include file="IWnotify_user_menu.htm"}
+<h2>{gt text="Create a new notify inform. Step 1 - Defining main information"}</h2>
+<form class="z-form" id="addEditNotify" method="post" action="{modurl modname='IWnotify' type='user' func=$func}">
+    <input type="hidden" name="csrftoken" value="{insert name='csrftoken'}" />
+    <input type="hidden" name="notifyId" value="{$notify.notifyId}" />
+    <input type="hidden" name="step" value="1" />
+    <div class="z-formrow">
+        <label for="notify_notifyTitle">{gt text="Notify inform title"}</label>
+        <input id="notify_notifyTitle" name="notifyTitle" value="{$notify.notifyTitle}" />
+    </div>
+    <div class="z-formrow">
+        <label for="notify_notifyDescription">{gt text="Notify inform description"}</label>
+        <textarea id="notify_notifyDescription" name="notifyDescription">{$notify.notifyDescription}</textarea>
+    </div>
+    <div class="z-formrow">
+        <label for="notify_notifyType">{gt text="Notify inform type"}</label>
+        <select id="notify_notifyType" name="notifyType">
+            <option {if $notify.notifyType eq 0}selected="selected"{/if} value="0">{gt text="Registrated users"}</option>
+            <option {if $notify.notifyType eq 1}selected="selected"{/if} value="1">{gt text="Unregistrated users"}</option>
+            <option {if $notify.notifyType eq 2}selected="selected"{/if} value="2">{gt text="Registrated and unregistrated users"}</option>
+        </select>
+        <div class="z-formnote z-informationmsg">
+            {gt text="For registered users the validation value can be both the user password or the value that you will define in next step as validadation value. Choose Registered users to send unregistrated users to login form."}
+        </div>
+    </div>
+    <div class="z-formrow">
+        <label for="notify_notifyOpenDate">{gt text="Open date"}</label>
+        <div class="z-formnote">
+            <input size="10" id="notify_notifyOpenDate" name="notifyOpenDate" value="{$notify.notifyOpenDate}" onfocus="blur();" />
+            <img id="notifyOpenDate_btn" src="modules/IWmain/images/calendar.gif" style="cursor:pointer;" />
+        </div>
+    </div>
+    <div class="z-formrow">
+        <label for="notify_notifyCloseDate">{gt text="Close date"}</label>
+        <div class="z-formnote">
+            <input size="10" id="notify_notifyCloseDate" name="notifyCloseDate"  onfocus="blur();" />
+            <img id="notifyCloseDate_btn" src="modules/IWmain/images/calendar.gif" value="{$notify.notifyCloseDate}" style="cursor:pointer;" />
+        </div>
+    </div>
+    <div class="z-formrow">
+        <label for="notify_notifyReturnUrl">{gt text="Notify return url"}</label>
+        <input id="notify_notifyReturnUrl" name="notifyReturnUrl" value="{$notify.notifyReturnUrl}" />
+    </div>
+    <div class="z-formrow">
+        <label for="notify_notifyCloseMsg">{gt text="Close message information"}</label>
+        <textarea id="notify_notifyCloseMsg" name="notifyCloseMsg">{$notify.notifyCloseMsg}</textarea>
+    </div>
+    <div class="z-formrow">
+        <label for="notify_notifyFailsMsg">{gt text="Fails message information"}</label>
+        <textarea id="notify_notifyFailsMsg" name="notifyFailsMsg">{$notify.notifyFailsMsg}</textarea>
+    </div>
+    <div class="z-formrow">
+        <label for="notify_notifyOnlyOnceVisit">{gt text="Only can be visited once"}</label>
+        <input type="checkbox" id="notify_notifyOnlyOnceVisit" {if $notify.notifyOnlyOnceVisit eq 1}checked="checked"{/if} name="notifyOnlyOnceVisit" value="1" />
+    </div>
+    <div class="z-center">
+        <span class="z-buttons">
+            <a title="Create" onClick="javascript:createNotify();">
+                {if $func eq 'createNotify'}
+                {img modname='core' src='button_ok.png' set='icons/small' __alt="Create" __title="Create"} {gt text="Create"}
+                {else}
+                {img modname='core' src='edit.png' set='icons/small' __alt="Modify" __title="Modify"} {gt text="Modify"}
+                {/if}
+            </a>
+        </span>
+        <span class="z-buttons">
+            <a href="{modurl modname=IWforms type=admin func=main}">
+                {img modname='core' src='button_cancel.png' set='icons/small' __alt="Cancel" __title="Cancel"} {gt text="Cancel"}
+            </a>
+        </span>
+    </div>
+</form>
+
+<script type="text/javascript">
+    var newForm = Calendar.setup({
+        onSelect       :    function(newForm) { newForm.hide() }
+    });
+    newForm.manageFields("notifyOpenDate_btn", "notify_notifyOpenDate", "%d/%m/%y");
+    
+    var caducity = Calendar.setup({
+        onSelect       :    function(caducity) { caducity.hide() }
+    });
+    caducity.manageFields("notifyCloseDate_btn", "notify_notifyCloseDate", "%d/%m/%y");
+</script>
+
+
+
+{*}
+<div class="userForm">
+    <div class="formTitle">{$form.title}</div>
+    <form name="newNote" id="newNote" class="z-form" {if not isset($adminView)}action="{modurl modname="IWforms" type="user" func="submitNote"}"{/if} method="post" enctype="multipart/form-data">
+          <input type="hidden" name="csrftoken" value="{insert name='csrftoken'}" />
+        <input type="hidden" name="fid" value="{$fid}" />
+        {$content}
+        {if $requiredText}
+        <div class="fieldContent">
+            {gt text="Fields marked with an"} <span class="required">*</span> {gt text="are required"}
+        </div>
+        {/if}
+        <div>&nbsp;</div>
+        {if not isset($adminView)}
+        <div class="z-center">
+            <span class="z-buttons">
+                <a style="cursor:pointer;" onClick="javascript:sendNote()" title="{gt text="Send"}">{img modname='core' src='button_ok.png' set='icons/small'} {gt text="Send"}</a>
+            </span>
+            <span class="z-buttons">
+                <a href="{modurl modname="IWforms" type="user" func="main"}">{img modname='core' src='button_cancel.png' set='icons/small'   __alt="Cancel" __title="Cancel"} {gt text="Cancel"}</a>
+            </span>
+        </div>
+        {/if}
+    </form>
+</div>
+{*}
