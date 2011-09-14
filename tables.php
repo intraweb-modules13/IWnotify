@@ -1,5 +1,6 @@
 <?php
 
+
 /**
  * Define module tables
  * @author Albert Pérez Monfort (aperezm@xtec.cat)
