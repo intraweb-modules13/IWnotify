@@ -141,6 +141,14 @@ class IWnotify_Controller_User extends Zikula_AbstractController {
                                     'step' => 2)));
                 break;
             case 2:
+                // get notify inform
+          
+                
+                
+                
+                
+                
+                
                 // checks that the correct file has been received
                 $importFile = FormUtil::getPassedValue('importFile', isset($args['importFile']) ? $args['importFile'] : null, 'FILES');
                 if ($importFile['name'] == '') {
@@ -180,14 +188,17 @@ class IWnotify_Controller_User extends Zikula_AbstractController {
                     $error = true;
                 }
 
+                /*
                 // verify that the xml structure is correct. At least need the same number of elements for each file
                 $nElements = count($columnsArray[0]);
-                foreach ($columnsArray as $column) {
+                foreach ($columnsArray as $column) {                   
                     if (count($column) != $nElements) {
                         $errorMsg = $this->__('Bad formated xml file.');
                         $error = true;
                     }
                 }
+                 * 
+                 */
 
                 if ($error) {
                     LogUtil::registerError($errorMsg);
@@ -231,7 +242,10 @@ class IWnotify_Controller_User extends Zikula_AbstractController {
 
     public function prepareFieldname($args) {
         $fieldName = FormUtil::getPassedValue('fieldName', isset($args['fieldName']) ? $args['fieldName'] : null, 'POST');
-        return $fieldName;
+        
+        $cleanedString = preg_replace("/[^a-zA-Z0-9]/", "", $fieldName);
+
+        return $cleanedString;
     }
 
 }
