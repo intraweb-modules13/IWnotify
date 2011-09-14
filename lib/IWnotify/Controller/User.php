@@ -141,7 +141,7 @@ class IWnotify_Controller_User extends Zikula_AbstractController {
                                     'step' => 2)));
                 break;
             case 2:
-                // get notify inform
+                // get notify inform for segurity proposals
           
                 
                 
