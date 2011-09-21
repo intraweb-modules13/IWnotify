@@ -83,4 +83,25 @@ class IWnotify_Api_User extends Zikula_AbstractApi {
         return true;
     }
 
+    public function getAllUserNotifies($args) {
+
+        $pntable = DBUtil::getTables();
+        $where = "";
+        $c = $pntable['IWnotify_definition_column'];
+
+        $where = "$c[notifyCreator] = " . UserUtil::getVar('uid');
+        $orderby = "$c[notifyTitle]";
+        
+        // get the objects from the db
+        $items = DBUtil::selectObjectArray('IWnotify_definition', $where, $orderby, '-1', '-1', 'notifyId');
+        
+        // Check for an error with the database code, and if so set an appropriate
+        if ($items === false)
+            return LogUtil::registerError($this->__('Error! Could not load items.'));
+        // Return the items
+
+
+        return $items;
+    }
+
 }

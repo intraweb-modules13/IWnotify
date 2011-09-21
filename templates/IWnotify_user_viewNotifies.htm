@@ -1,16 +1,34 @@
 {include file="IWnotify_user_menu.htm"}
 
 <table class="z-datatable">
+    <thead>
+        <tr>
+            <th>{gt text="Title"}</th>
+            <th>{gt text="Description"}</th>
+            <th>{gt text="Open date"}</th>
+            <th>{gt text="Close date"}</th>
+            <th>{gt text="Options"}</th>
+        </tr>
+    </thead>
+    <tbody>
     {foreach item='notify' from=$notifies}
     <tr>
         <td>
             {$notify.notifyTitle}
         </td>
         <td>
-            {$notify.notifyDescription}
+            {$notify.notifyDescription|nl2br}
         </td>
         <td>
-            {gt text="Access form"}
+            {$notify.notifyOpenDate}
+        </td>
+        <td>
+            {$notify.notifyCloseDate}
+        </td>
+        <td>
+            <a href="#">
+                {gt text="Access form"}
+            </a>
         </td>
     </tr>
     {foreachelse}
@@ -20,4 +38,5 @@
         </td>
     </tr>
     {/foreach}
+    </tbody>
 </table>

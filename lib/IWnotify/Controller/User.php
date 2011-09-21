@@ -31,7 +31,13 @@ class IWnotify_Controller_User extends Zikula_AbstractController {
             throw new Zikula_Exception_Forbidden();
         }
 
-        $notifies = array();
+        $notifies = ModUtil::apiFunc('IWnotify', 'user', 'getAllUserNotifies');
+
+        foreach ($notifies as $notify) {
+            $notifies[$notify['notifyId']]['notifyOpenDate'] = ($notify['notifyOpenDate'] != '0000-00-00 00:00:00') ? DateUtil::formatDatetime($notify['notifyOpenDate'], '%d/%m/%Y') : '';
+            $notifies[$notify['notifyId']]['notifyCloseDate'] = ($notify['notifyCloseDate'] != '0000-00-00 00:00:00') ? DateUtil::formatDatetime($notify['notifyCloseDate'], '%d/%m/%Y') : '';
+        }
+
         return $this->view->assign('notifies', $notifies)
                         ->fetch('IWnotify_user_viewNotifies.htm');
     }
