@@ -79,6 +79,15 @@ class IWnotify_Controller_User extends Zikula_AbstractController {
                 'notifyFailsMsg' => '',
             );
         }
+        if ($step > 1) {
+            if ($notifyId == 0) {
+                LogUtil::registerError($this->__('No notify id received.'));
+                // Redirect to the main site for the user
+                return System::redirect(ModUtil::url('IWnotify', 'user', 'viewNotifies'));
+            }
+            // get fields in case them exist
+            $fields = ModUtil::apiFunc('IWnotify', 'user', 'getAllNotifyFields', array('notifyId' => $notifyId));
+        }
         switch ($step) {
             case 0:
             case 1:
@@ -91,7 +100,20 @@ class IWnotify_Controller_User extends Zikula_AbstractController {
             case 2:
                 return $this->view->assign('step', 2)
                                 ->assign('notify', $notify)
+                                ->assign('fields', $fields)
                                 ->fetch('IWnotify_user_importInform.htm');
+                break;
+            case 3:
+                return $this->view->assign('step', 3)
+                                ->assign('notify', $notify)
+                                ->assign('fields', $fields)
+                                ->fetch('IWnotify_user_validationField.htm');
+                break;
+            case 4:
+                return $this->view->assign('step', 4)
+                                ->assign('notify', $notify)
+                                ->assign('fields', $fields)
+                                ->fetch('IWnotify_user_formatInform.htm');
                 break;
         }
     }
@@ -112,6 +134,9 @@ class IWnotify_Controller_User extends Zikula_AbstractController {
         if (!SecurityUtil::checkPermission('IWnotify::', "::", ACCESS_ADD)) {
             throw new Zikula_Exception_Forbidden();
         }
+
+        // Confirm authorisation code
+        $this->checkCsrfToken();
 
         switch ($step) {
             case 1:
@@ -148,13 +173,6 @@ class IWnotify_Controller_User extends Zikula_AbstractController {
                 break;
             case 2:
                 // get notify inform for segurity proposals
-          
-                
-                
-                
-                
-                
-                
                 // checks that the correct file has been received
                 $importFile = FormUtil::getPassedValue('importFile', isset($args['importFile']) ? $args['importFile'] : null, 'FILES');
                 if ($importFile['name'] == '') {
@@ -175,7 +193,7 @@ class IWnotify_Controller_User extends Zikula_AbstractController {
                     $error = true;
                 }
                 $items = $doc->getElementsByTagName("Row");
-                $i = 0;
+                $nitems = 0;
                 $itemsArray = array();
                 $columnsArray = array();
                 foreach ($items as $item) {
@@ -183,26 +201,26 @@ class IWnotify_Controller_User extends Zikula_AbstractController {
                     $j = 0;
                     foreach ($cells as $cell) {
                         $data = $cell->getElementsByTagName('Data')->item(0)->nodeValue;
-                        $columnsArray[$i][$j] = $data;
+                        $columnsArray[$nitems][$j] = $data;
                         $j++;
                     }
-                    $i++;
+                    $nitems++;
                 }
 
-                if ($i == 0) {
+                if ($nitems == 0) {
                     $errorMsg = $this->__('No items found in xml file.');
                     $error = true;
                 }
 
                 /*
-                // verify that the xml structure is correct. At least need the same number of elements for each file
-                $nElements = count($columnsArray[0]);
-                foreach ($columnsArray as $column) {                   
-                    if (count($column) != $nElements) {
-                        $errorMsg = $this->__('Bad formated xml file.');
-                        $error = true;
-                    }
-                }
+                  // verify that the xml structure is correct. At least need the same number of elements for each file
+                  $nElements = count($columnsArray[0]);
+                  foreach ($columnsArray as $column) {
+                  if (count($column) != $nElements) {
+                  $errorMsg = $this->__('Bad formated xml file.');
+                  $error = true;
+                  }
+                  }
                  * 
                  */
 
@@ -212,6 +230,24 @@ class IWnotify_Controller_User extends Zikula_AbstractController {
                     return System::redirect(ModUtil::url('IWnotify', 'user', 'newNotify', array('notifyId' => $created,
                                         'step' => 2)));
                 }
+
+                // delete previous fields if exists
+                if (!ModUtil::apifunc('IWnotify', 'user', 'deleteFields', array('notifyId' => $notifyId))) {
+                    LogUtil::registerError($this->__("Error deleting previous fields."));
+                    // Redirect to the main site for the user
+                    return System::redirect(ModUtil::url('IWnotify', 'user', 'newNotify', array('notifyId' => $notifyId,
+                                        'step' => 2)));
+                }
+
+                // delete previous fields contents if exists
+                if (!ModUtil::apifunc('IWnotify', 'user', 'deleteFieldsContent', array('notifyId' => $notifyId))) {
+                    LogUtil::registerError($this->__("Error deleting previous fields content."));
+                    // Redirect to the main site for the user
+                    return System::redirect(ModUtil::url('IWnotify', 'user', 'newNotify', array('notifyId' => $notifyId,
+                                        'step' => 2)));
+                }
+
+                $fieldsCreatedArray = array();
 
                 // the file is formated correctly. Create fields in database
                 foreach ($columnsArray[0] as $field) {
@@ -224,11 +260,16 @@ class IWnotify_Controller_User extends Zikula_AbstractController {
                         return System::redirect(ModUtil::url('IWnotify', 'user', 'newNotify', array('notifyId' => $notifyId,
                                             'step' => 2)));
                     }
-                    // create data for each field
-                    for ($i = 1; $i < count($columnsArray); $i++) {
+                    $fieldsCreatedArray[] = $fieldCreated;
+                }
+
+                // create data for each field
+                for ($i = 1; $i < $nitems; $i++) {
+                    $j = 0;
+                    if (count($columnsArray[$i]) > 1) {
                         foreach ($columnsArray[$i] as $content) {
                             $fieldContent = ModUtil::apiFunc('IWnotify', 'user', 'fillField', array('notifyId' => $notifyId,
-                                        'notifyFieldId' => $fieldCreated,
+                                        'notifyFieldId' => $fieldsCreatedArray[$j],
                                         'notifyFieldContent' => $content,
                                     ));
                             if (!$fieldContent) {
@@ -237,21 +278,102 @@ class IWnotify_Controller_User extends Zikula_AbstractController {
                                 return System::redirect(ModUtil::url('IWnotify', 'user', 'newNotify', array('notifyId' => $notifyId,
                                                     'step' => 2)));
                             }
+                            $j++;
                         }
                     }
                 }
 
-                print_r($columnsArray);
-                die();
+                LogUtil::registerStatus($this->__('The data has been saved successfully in database.'));
+
+                // Redirect to the main site for the user
+                return System::redirect(ModUtil::url('IWnotify', 'user', 'newNotify', array('notifyId' => $notifyId,
+                                    'step' => 3)));
+                break;
+            case 3:
+                $notifyAuthField = FormUtil::getPassedValue('notifyAuthField', isset($args['notifyAuthField']) ? $args['notifyAuthField'] : 0, 'POST');
+
+                if ($notifyAuthField == 0) {
+                    LogUtil::registerError($this->__("Please select a validation field."));
+                    // Redirect to the main site for the user
+                    return System::redirect(ModUtil::url('IWnotify', 'user', 'newNotify', array('notifyId' => $notifyId,
+                                        'step' => 3)));
+                }
+
+                if (!ModUtil::apiFunc('IWnotify', 'user', 'selectValidationField', array('notifyId' => $notifyId,
+                            'notifyAuthField' => $notifyAuthField))) {
+                    LogUtil::registerError($this->__('Error selecting the validation field.'));
+                    return System::redirect(ModUtil::url('IWnotify', 'user', 'newNotify', array('notifyId' => $notifyId,
+                                        'step' => 3)));
+                }
+
+                LogUtil::registerStatus($this->__('The validation field has been successfully selected.'));
+
+
+                // Redirect to the main site for the user
+                return System::redirect(ModUtil::url('IWnotify', 'user', 'newNotify', array('notifyId' => $notifyId,
+                                    'step' => 4)));
+
+                break;
+            case 4:
+                $notifyFormat = FormUtil::getPassedValue('notifyFormat', isset($args['notifyFormat']) ? $args['notifyFormat'] : null, 'POST');
+
+                $edited = ModUtil::apiFunc('IWnotify', 'user', 'editNotify', array('notifyId' => $notifyId,
+                            'items' => array('notifyFormat' => $notifyFormat),
+                        ));
+                if (!$edited) {
+                    LogUtil::registerError($this->__('Error editing notify inform format.'));
+                    // Redirect to the main site for the user
+                    return System::redirect(ModUtil::url('IWnotify', 'user', 'viewNotifies'));
+                }
+
+                LogUtil::registerStatus($this->__('The notify has been created or modified successfully.'));
+
+                return System::redirect(ModUtil::url('IWnotify', 'user', 'viewNotifies'));
+                break;
         }
     }
 
     public function prepareFieldname($args) {
         $fieldName = FormUtil::getPassedValue('fieldName', isset($args['fieldName']) ? $args['fieldName'] : null, 'POST');
-        
+
         $cleanedString = preg_replace("/[^a-zA-Z0-9]/", "", $fieldName);
 
         return $cleanedString;
+    }
+
+    public function loadNotify($args) {
+        $notifyId = FormUtil::getPassedValue('notifyId', isset($args['notifyId']) ? $args['notifyId'] : 0, 'GET');
+
+        // Security check
+        if (!SecurityUtil::checkPermission('IWnotify::', "::", ACCESS_READ)) {
+            throw new Zikula_Exception_Forbidden();
+        }
+
+        $notify = ModUtil::apiFunc('IWnotify', 'user', 'getNotify', array('notifyId' => $notifyId));
+        if (!$notify) {
+            LogUtil::registerError($this->__('Error getting notify inform.'));
+            // Redirect to the main site for the user
+            return System::redirect(ModUtil::url('IWnotify', 'user', 'viewNotifies'));
+        }
+
+        return $this->view->assign('notify', $notify)
+                        ->fetch('IWnotify_user_openNotify.htm');
+    }
+
+    public function getInform($args) {
+        $notifyId = FormUtil::getPassedValue('notifyId', isset($args['notifyId']) ? $args['notifyId'] : 0, 'POST');
+        $validateData = FormUtil::getPassedValue('validateData', isset($args['validateData']) ? $args['validateData'] : 0, 'POST');
+
+        // Security check
+        if (!SecurityUtil::checkPermission('IWnotify::', "::", ACCESS_READ)) {
+            throw new Zikula_Exception_Forbidden();
+        }
+
+        // Confirm authorisation code
+        $this->checkCsrfToken();
+
+        print 'CONTINUAR AQUÍ';
+        die();
     }
 
 }

@@ -11,32 +11,49 @@
         </tr>
     </thead>
     <tbody>
-    {foreach item='notify' from=$notifies}
-    <tr>
-        <td>
-            {$notify.notifyTitle}
-        </td>
-        <td>
-            {$notify.notifyDescription|nl2br}
-        </td>
-        <td>
-            {$notify.notifyOpenDate}
-        </td>
-        <td>
-            {$notify.notifyCloseDate}
-        </td>
-        <td>
-            <a href="#">
-                {gt text="Access form"}
-            </a>
-        </td>
-    </tr>
-    {foreachelse}
-    <tr>
-        <td colspan="3">
-            {gt text="No notify informs defined."}
-        </td>
-    </tr>
-    {/foreach}
+        {foreach item='notify' from=$notifies}
+        <tr>
+            <td>
+                {$notify.notifyTitle}
+            </td>
+            <td>
+                {$notify.notifyDescription|nl2br}
+            </td>
+            <td>
+                {$notify.notifyOpenDate}
+            </td>
+            <td>
+                {$notify.notifyCloseDate}
+            </td>
+            <td width="100">
+                <div>
+                    <a href="{modurl modname='IWnotify' type='user' func='loadNotify' notifyId=$notify.notifyId}">
+                        {gt text="Access form"}
+                    </a>
+                </div>
+                <div>
+                    <a href="{modurl modname='IWnotify' type='user' func='newNotify' notifyId=$notify.notifyId step=2}">
+                        {gt text="Save data"}
+                    </a>
+                </div>
+                <div>
+                    <a href="{modurl modname='IWnotify' type='user' func='newNotify' notifyId=$notify.notifyId step=3}">
+                        {gt text="Validation field"}
+                    </a>
+                </div>
+                <div>
+                    <a href="{modurl modname='IWnotify' type='user' func='newNotify' notifyId=$notify.notifyId step=4}">
+                        {gt text="Format"}
+                    </a>
+                </div>
+            </td>
+        </tr>
+        {foreachelse}
+        <tr>
+            <td colspan="3">
+                {gt text="No notify informs defined."}
+            </td>
+        </tr>
+        {/foreach}
     </tbody>
 </table>

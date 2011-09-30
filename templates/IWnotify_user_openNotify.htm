@@ -1,0 +1,17 @@
+{include file="IWnotify_user_menu.htm"}
+<h2>{gt text="Read inform"}</h2>
+<form class="z-form" id="validateForm" method="post" enctype="multipart/form-data" action="{modurl modname='IWnotify' type='user' func='getInform'}">
+    <input type="hidden" name="csrftoken" value="{insert name='csrftoken'}" />
+    <input type="hidden" name="notifyId" value="{$notify.notifyId}" />
+    <div class="z-formrow">
+        <label for="notify_validateData">{gt text="Enter validation data"}</label>
+        <input type="text" id="notify_validate" name="validateData" />
+    </div>
+    <div class="z-center">
+        <span class="z-buttons">
+            <a title="Import" onClick="javascript:document.forms['validateForm'].submit();">
+                {img modname='core' src='button_ok.png' set='icons/small' __alt="Send" __title="Import"} {gt text="Send"}
+            </a>
+        </span>
+    </div>
+</form>

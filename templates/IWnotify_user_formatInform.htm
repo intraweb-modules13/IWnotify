@@ -1,0 +1,38 @@
+{include file="IWnotify_user_menu.htm"}
+<h2>{gt text="Import a notify inform. Step 4 - Format notify inform"}</h2>
+<form class="z-form" id="formatNotifyForm" method="post" enctype="multipart/form-data" action="{modurl modname='IWnotify' type='user' func='createNotify'}">
+    <input type="hidden" name="csrftoken" value="{insert name='csrftoken'}" />
+    <input type="hidden" name="notifyId" value="{$notify.notifyId}" />
+    <input type="hidden" name="step" value="4" />
+    <div class="z-formrow">
+        <label for="notify_notifyFormat">{gt text="Notify format"}</label>
+        <textarea id="notify_notifyFormat" name="notifyFormat">{$notify.notifyFormat}</textarea>
+    </div>
+    <div class="z-informationmsg">
+        <div>{gt text="Text that will be displaied to users when they request for notifies. You can add the tags listed below to attach information."}</div>
+        {if $fields|@count gt 0}
+        {foreach item=field from=$fields}
+        <span class="notifyFileNameForFormat">
+            $${$field.notifyFieldName}$$
+        </span>
+        {/foreach}
+        {else}
+        {gt text="No fields defined yet."}
+        <a href="{modurl modname='IWnotify' type='user' func='newNotify' notifyId=$notify.notifyId step=2}">
+            {gt text="Import fields"}
+        </a>
+        {/if}
+    </div>
+    <div class="z-center">
+        <span class="z-buttons">
+            <a title="Import" onClick="javascript:document.forms['formatNotifyForm'].submit();">
+                {img modname='core' src='button_ok.png' set='icons/small' __alt="Import" __title="Import"} {gt text="Import"}
+            </a>
+        </span>
+        <span class="z-buttons">
+            <a href="{modurl modname='IWnotify' type='user' func='viewNotifies'}">
+                {img modname='core' src='button_cancel.png' set='icons/small' __alt="Cancel" __title="Cancel"} {gt text="Cancel"}
+            </a>
+        </span>
+    </div>
+</form>

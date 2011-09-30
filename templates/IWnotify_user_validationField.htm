@@ -1,0 +1,37 @@
+{include file="IWnotify_user_menu.htm"}
+<h2>{gt text="Import a notify inform. Step 3 - Select the validation field"}</h2>
+<form class="z-form" id="valirationFieldForm" method="post" enctype="multipart/form-data" action="{modurl modname='IWnotify' type='user' func='createNotify'}">
+    <input type="hidden" name="csrftoken" value="{insert name='csrftoken'}" />
+    <input type="hidden" name="notifyId" value="{$notify.notifyId}" />
+    <input type="hidden" name="step" value="3" />
+
+    <div class="z-formrow">
+        <label id="notify_xmlFile">{gt text="Validation field"}</label>
+        {if $fields|@count gt 0}
+        {foreach item=field from=$fields}
+        <div class="z-formnote">
+            <input type="radio" name="notifyAuthField" {if $field.notifyAuthField eq 1}checked="checked"{/if} value="{$field.notifyFieldId}" />{$field.notifyFieldName}
+        </div>
+        {/foreach}
+        {else}
+        <div class="z-formnote z-warningmsg">
+            {gt text="No fields defined yet."}
+            <a href="{modurl modname='IWnotify' type='user' func='newNotify' notifyId=$notify.notifyId step=2}">
+                {gt text="Import fields"}
+            </a>
+        </div>
+        {/if}
+    </div>
+    <div class="z-center">
+        <span class="z-buttons">
+            <a title="Import" onClick="javascript:document.forms['valirationFieldForm'].submit();">
+                {img modname='core' src='button_ok.png' set='icons/small' __alt="Import" __title="Import"} {gt text="Import"}
+            </a>
+        </span>
+        <span class="z-buttons">
+            <a href="{modurl modname='IWnotify' type='user' func='viewNotifies'}">
+                {img modname='core' src='button_cancel.png' set='icons/small' __alt="Cancel" __title="Cancel"} {gt text="Cancel"}
+            </a>
+        </span>
+    </div>
+</form>
