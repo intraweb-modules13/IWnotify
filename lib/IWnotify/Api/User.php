@@ -62,6 +62,32 @@ class IWnotify_Api_User extends Zikula_AbstractApi {
         return $items;
     }
 
+    public function getNotifyValidationField($args) {
+        // security check
+        if (!SecurityUtil::checkPermission('IWnotify::', "::", ACCESS_READ)) {
+            throw new Zikula_Exception_Forbidden();
+        }
+        $item = array();
+        if (!isset($args['notifyId'])) {
+            return $item;
+        }
+        $pntable = DBUtil::getTables();
+        $where = "";
+        $c = $pntable['IWnotify_fields_column'];
+
+        $where = "$c[notifyId] = $args[notifyId] AND $c[notifyAuthField] = 1";
+
+        // get the objects from the db
+        $item = DBUtil::selectObjectArray('IWnotify_fields', $where, '', '-1', '-1', 'notifyId');
+
+        // Check for an error with the database code, and if so set an appropriate
+        if ($item === false)
+            return LogUtil::registerError($this->__('Error! Could not load item.'));
+
+        // Return the item
+        return $item[$args['notifyId']];
+    }
+
     public function createNotify($args) {
         // security check
         if (!SecurityUtil::checkPermission('IWnotify::', "::", ACCESS_ADD)) {
@@ -305,6 +331,96 @@ class IWnotify_Api_User extends Zikula_AbstractApi {
         }
 
         return true;
+    }
+
+    public function deleteNotify($args) {
+        // security check
+        if (!SecurityUtil::checkPermission('IWnotify::', "::", ACCESS_ADD)) {
+            throw new Zikula_Exception_Forbidden();
+        }
+
+        if (!$args['notifyId'] > 0) {
+            return false;
+        }
+
+        // get inform
+        $notify = ModUtil::apiFunc('IWnotify', 'user', 'getNotify', array('notifyId' => $args['notifyId']));
+
+        if (!$notify) {
+            return false;
+        }
+
+        // check if notify author is the current user
+        if ($notify['notifyCreator'] != UserUtil::getVar('uid') && !SecurityUtil::checkPermission('IWnotify::', "::", ACCESS_ADMIN)) {
+            throw new Zikula_Exception_Forbidden();
+        }
+
+        if (!ModUtil::apiFunc('IWnotify', 'user', 'deleteFields', array('notifyId' => $args['notifyId']))) {
+            return LogUtil::registerError($this->__('Error! Could not delete items.'));
+        }
+
+        if (!ModUtil::apiFunc('IWnotify', 'user', 'deleteFieldsContent', array('notifyId' => $args['notifyId']))) {
+            return LogUtil::registerError($this->__('Error! Could not delete items.'));
+        }
+
+        if (!DBUtil::deleteObjectByID('IWnotify_definition', $args['notifyId'], 'notifyId')) {
+            return LogUtil::registerError($this->__('Error! Could not delete items.'));
+        }
+
+        return true;
+    }
+
+    public function getNotifyValidateValue($args) {
+        // security check
+        if (!SecurityUtil::checkPermission('IWnotify::', "::", ACCESS_READ)) {
+            throw new Zikula_Exception_Forbidden();
+        }
+        $item = array();
+        if (!isset($args['notifyId']) || !$args['notifyId'] > 0 || !isset($args['notifyFieldContent']) || $args['notifyFieldContent'] == '' || !isset($args['notifyFieldId']) || !$args['notifyFieldId'] > 0) {
+            return $item;
+        }
+        $pntable = DBUtil::getTables();
+        $where = "";
+        $c = $pntable['IWnotify_fields_content_column'];
+
+        $where = "$c[notifyId] = $args[notifyId] AND $c[notifyFieldContent] = '$args[notifyFieldContent]' AND $c[notifyFieldId] = $args[notifyFieldId]";
+
+        // get the objects from the db
+        $items = DBUtil::selectObjectArray('IWnotify_fields_content', $where, '', '-1', '-1', 'notifyId');
+
+        // Check for an error with the database code, and if so set an appropriate
+        if ($items === false)
+            return LogUtil::registerError($this->__('Error! Could not load items.'));
+        // Return the items
+
+
+        return $items;
+    }
+
+    public function getNotifyValues($args) {
+        // security check
+        if (!SecurityUtil::checkPermission('IWnotify::', "::", ACCESS_READ)) {
+            throw new Zikula_Exception_Forbidden();
+        }
+        $item = array();
+        if (!isset($args['notifyId']) || !$args['notifyId'] > 0 || !isset($args['notifyFieldId']) || !$args['notifyFieldId'] > 0) {
+            return $item;
+        }
+
+        $pntable = DBUtil::getTables();
+        $c = $pntable['IWnotify_fields_content_column'];
+
+        $where = "$c[notifyId] = $args[notifyId] AND $c[notifyFieldId] = $args[notifyFieldId]";
+
+        // get the objects from the db
+        $items = DBUtil::selectObjectArray('IWnotify_fields_content', $where, '', '-1', '-1', 'notifyFieldContentId');
+
+        // Check for an error with the database code, and if so set an appropriate
+        if ($items === false)
+            return LogUtil::registerError($this->__('Error! Could not load items.'));
+        // Return the items
+
+        return $items;
     }
 
 }

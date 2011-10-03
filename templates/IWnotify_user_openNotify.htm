@@ -1,8 +1,16 @@
 {include file="IWnotify_user_menu.htm"}
-<h2>{gt text="Read inform"}</h2>
+<h2>{$notify.notifyTitle}</h2>
 <form class="z-form" id="validateForm" method="post" enctype="multipart/form-data" action="{modurl modname='IWnotify' type='user' func='getInform'}">
     <input type="hidden" name="csrftoken" value="{insert name='csrftoken'}" />
     <input type="hidden" name="notifyId" value="{$notify.notifyId}" />
+    {if $failed eq 1}
+    <div class="z-errormsg">
+        {$notify.notifyFailsMsg|nl2br}
+    </div>
+    {/if}
+    <div class="notifyFormText">
+        {$notify.notifyFormText|nl2br}
+    </div>
     <div class="z-formrow">
         <label for="notify_validateData">{gt text="Enter validation data"}</label>
         <input type="text" id="notify_validate" name="validateData" />

@@ -77,6 +77,7 @@ class IWnotify_Controller_User extends Zikula_AbstractController {
                 'notifyOnlyOnceVisit' => 0,
                 'notifyCloseMsg' => '',
                 'notifyFailsMsg' => '',
+                'notifyFormText' => '',
             );
         }
         if ($step > 1) {
@@ -148,6 +149,8 @@ class IWnotify_Controller_User extends Zikula_AbstractController {
                 $notifyCloseMsg = FormUtil::getPassedValue('notifyCloseMsg', isset($args['notifyCloseMsg']) ? $args['notifyCloseMsg'] : null, 'POST');
                 $notifyReturnUrl = FormUtil::getPassedValue('notifyReturnUrl', isset($args['notifyReturnUrl']) ? $args['notifyReturnUrl'] : null, 'POST');
                 $notifyOnlyOnceVisit = FormUtil::getPassedValue('notifyOnlyOnceVisit', isset($args['notifyOnlyOnceVisit']) ? $args['notifyOnlyOnceVisit'] : 0, 'POST');
+                $notifyFailsMsg = FormUtil::getPassedValue('notifyFailsMsg', isset($args['notifyFailsMsg']) ? $args['notifyFailsMsg'] : null, 'POST');
+                $notifyFormText = FormUtil::getPassedValue('notifyFormText', isset($args['notifyFormText']) ? $args['notifyFormText'] : null, 'POST');
 
                 $created = ModUtil::apiFunc('IWnotify', 'user', 'createNotify', array('notifyTitle' => $notifyTitle,
                             'notifyDescription' => $notifyDescription,
@@ -158,6 +161,7 @@ class IWnotify_Controller_User extends Zikula_AbstractController {
                             'notifyReturnUrl' => $notifyReturnUrl,
                             'notifyOnlyOnceVisit' => $notifyOnlyOnceVisit,
                             'notifyFailsMsg' => $notifyFailsMsg,
+                            'notifyFormText' => $notifyFormText,
                         ));
                 if (!$created) {
                     LogUtil::registerError($this->__('Error creating notify inform.'));
@@ -333,6 +337,84 @@ class IWnotify_Controller_User extends Zikula_AbstractController {
         }
     }
 
+    public function editNotify($args) {
+        $notifyId = FormUtil::getPassedValue('notifyId', isset($args['notifyId']) ? $args['notifyId'] : 0, 'GETPOST');
+
+        // Security check
+        if (!SecurityUtil::checkPermission('IWnotify::', "::", ACCESS_ADD)) {
+            throw new Zikula_Exception_Forbidden();
+        }
+
+        // get inform
+        $notify = ModUtil::apiFunc('IWnotify', 'user', 'getNotify', array('notifyId' => $notifyId));
+
+        if (!$notify) {
+            LogUtil::registerError($this->__('Error getting notify inform.'));
+            // Redirect to the main site for the user
+            return System::redirect(ModUtil::url('IWnotify', 'user', 'viewNotifies'));
+        }
+
+        // check if notify author is the current user
+        if ($notify['notifyCreator'] != UserUtil::getVar('uid') && !SecurityUtil::checkPermission('IWnotify::', "::", ACCESS_ADMIN)) {
+            throw new Zikula_Exception_Forbidden();
+        }
+        return $this->view->assign('step', 1)
+                        ->assign('notify', $notify)
+                        ->assign('func', 'updateNotify')
+                        ->fetch('IWnotify_user_addEditNotify.htm');
+    }
+
+    public function updateNotify($args) {
+        $notifyId = FormUtil::getPassedValue('notifyId', isset($args['notifyId']) ? $args['notifyId'] : 0, 'GETPOST');
+        $notifyTitle = FormUtil::getPassedValue('notifyTitle', isset($args['notifyTitle']) ? $args['notifyTitle'] : null, 'POST');
+        $notifyDescription = FormUtil::getPassedValue('notifyDescription', isset($args['notifyDescription']) ? $args['notifyDescription'] : null, 'POST');
+        $notifyOpenDate = FormUtil::getPassedValue('notifyOpenDate', isset($args['notifyOpenDate']) ? $args['notifyOpenDate'] : null, 'POST');
+        $notifyCloseDate = FormUtil::getPassedValue('notifyCloseDate', isset($args['notifyCloseDate']) ? $args['notifyCloseDate'] : null, 'POST');
+        $notifyType = FormUtil::getPassedValue('notifyType', isset($args['notifyType']) ? $args['notifyType'] : 0, 'POST');
+        $notifyCloseMsg = FormUtil::getPassedValue('notifyCloseMsg', isset($args['notifyCloseMsg']) ? $args['notifyCloseMsg'] : null, 'POST');
+        $notifyReturnUrl = FormUtil::getPassedValue('notifyReturnUrl', isset($args['notifyReturnUrl']) ? $args['notifyReturnUrl'] : null, 'POST');
+        $notifyOnlyOnceVisit = FormUtil::getPassedValue('notifyOnlyOnceVisit', isset($args['notifyOnlyOnceVisit']) ? $args['notifyOnlyOnceVisit'] : 0, 'POST');
+        $notifyFailsMsg = FormUtil::getPassedValue('notifyFailsMsg', isset($args['notifyFailsMsg']) ? $args['notifyFailsMsg'] : null, 'POST');
+        $notifyFormText = FormUtil::getPassedValue('notifyFormText', isset($args['notifyFormText']) ? $args['notifyFormText'] : null, 'POST');
+
+        // Security check
+        if (!SecurityUtil::checkPermission('IWnotify::', "::", ACCESS_ADD)) {
+            throw new Zikula_Exception_Forbidden();
+        }
+
+        // get inform
+        $notify = ModUtil::apiFunc('IWnotify', 'user', 'getNotify', array('notifyId' => $notifyId));
+
+        if (!$notify) {
+            LogUtil::registerError($this->__('Error getting notify inform.'));
+            // Redirect to the main site for the user
+            return System::redirect(ModUtil::url('IWnotify', 'user', 'viewNotifies'));
+        }
+
+        if (!ModUtil::apiFunc('IWnotify', 'user', 'editNotify', array(
+                    'notifyId' => $notifyId,
+                    'items' => array(
+                        'notifyTitle' => $notifyTitle,
+                        'notifyDescription' => $notifyDescription,
+                        'notifyOpenDate' => $notifyOpenDate,
+                        'notifyCloseDate' => $notifyCloseDate,
+                        'notifyType' => $notifyType,
+                        'notifyCloseMsg' => $notifyCloseMsg,
+                        'notifyReturnUrl' => $notifyReturnUrl,
+                        'notifyOnlyOnceVisit' => $notifyOnlyOnceVisit,
+                        'notifyFailsMsg' => $notifyFailsMsg,
+                        'notifyFormText' => $notifyFormText,
+                    ),
+                ))) {
+            LogUtil::registerError($this->__('Error editing notify inform.'));
+            // Redirect to the main site for the user
+            return System::redirect(ModUtil::url('IWnotify', 'user', 'viewNotifies'));
+        }
+        LogUtil::registerStatus($this->__('The notify inform has been edited.'));
+        // Redirect to the main site for the user
+        return System::redirect(ModUtil::url('IWnotify', 'user', 'viewNotifies'));
+    }
+
     public function prepareFieldname($args) {
         $fieldName = FormUtil::getPassedValue('fieldName', isset($args['fieldName']) ? $args['fieldName'] : null, 'POST');
 
@@ -342,7 +424,8 @@ class IWnotify_Controller_User extends Zikula_AbstractController {
     }
 
     public function loadNotify($args) {
-        $notifyId = FormUtil::getPassedValue('notifyId', isset($args['notifyId']) ? $args['notifyId'] : 0, 'GET');
+        $notifyId = FormUtil::getPassedValue('notifyId', isset($args['notifyId']) ? $args['notifyId'] : 0, 'GETPOST');
+        $failed = FormUtil::getPassedValue('failed', isset($args['failed']) ? $args['failed'] : 0, 'GETPOST');
 
         // Security check
         if (!SecurityUtil::checkPermission('IWnotify::', "::", ACCESS_READ)) {
@@ -357,7 +440,48 @@ class IWnotify_Controller_User extends Zikula_AbstractController {
         }
 
         return $this->view->assign('notify', $notify)
+                        ->assign('failed', $failed)
                         ->fetch('IWnotify_user_openNotify.htm');
+    }
+
+    public function deleteNotify($args) {
+        $notifyId = FormUtil::getPassedValue('notifyId', isset($args['notifyId']) ? $args['notifyId'] : 0, 'GETPOST');
+        $confirm = FormUtil::getPassedValue('confirm', isset($args['confirm']) ? $args['confirm'] : 0, 'POST');
+
+        // Security check
+        if (!SecurityUtil::checkPermission('IWnotify::', "::", ACCESS_ADD)) {
+            throw new Zikula_Exception_Forbidden();
+        }
+
+        // get inform
+        $notify = ModUtil::apiFunc('IWnotify', 'user', 'getNotify', array('notifyId' => $notifyId));
+
+        if (!$notify) {
+            LogUtil::registerError($this->__('Error getting notify inform.'));
+            // Redirect to the main site for the user
+            return System::redirect(ModUtil::url('IWnotify', 'user', 'viewNotifies'));
+        }
+
+        // check if notify author is the current user
+        if ($notify['notifyCreator'] != UserUtil::getVar('uid') && !SecurityUtil::checkPermission('IWnotify::', "::", ACCESS_ADMIN)) {
+            throw new Zikula_Exception_Forbidden();
+        }
+
+        if ($confirm == 0) {
+            return $this->view->assign('notify', $notify)
+                            ->fetch('IWnotify_user_deleteNotify.htm');
+        }
+
+        // deletion confirmed. Proceed with it
+        if (!ModUtil::apiFunc('IWnotify', 'user', 'deleteNotify', array('notifyId' => $notifyId))) {
+            LogUtil::registerError($this->__('Error deleting notify.'));
+            // Redirect to the main site for the user
+            return System::redirect(ModUtil::url('IWnotify', 'user', 'viewNotifies'));
+        }
+
+        LogUtil::registerStatus($this->__('Notify deleted.'));
+        // Redirect to the main site for the user
+        return System::redirect(ModUtil::url('IWnotify', 'user', 'viewNotifies'));
     }
 
     public function getInform($args) {
@@ -372,7 +496,44 @@ class IWnotify_Controller_User extends Zikula_AbstractController {
         // Confirm authorisation code
         $this->checkCsrfToken();
 
-        print 'CONTINUAR AQUÍ';
+        if ($validateData == '') {
+            LogUtil::registerError($this->__('Error! Please enter the required validation value.'));
+            // Redirect to the main site for the user
+            return System::redirect(ModUtil::url('IWnotify', 'user', 'loadNotify', array('notifyId' => $notifyId)));
+        }
+
+        // get notify inform validation field
+        $validationField = ModUtil::apiFunc('IWnotify', 'user', 'getNotifyValidationField', array('notifyId' => $notifyId));
+
+        if (!$validationField) {
+            LogUtil::registerError($this->__('Error! Not possible to get validation field.'));
+            // Redirect to the main site for the user
+            return System::redirect(ModUtil::url('IWnotify', 'user', 'viewNotifies'));
+        }
+
+        // get data acording with the validation field information
+        $validateValue = ModUtil::apiFunc('IWnotify', 'user', 'getNotifyValidateValue', array('notifyFieldId' => $validationField['notifyFieldId'],
+                    'notifyId' => $notifyId,
+                    'notifyFieldContent' => $validateData));
+
+        if (!$validateValue || strtolower($validateData) != strtolower($validateValue[$notifyId]['notifyFieldContent'])) {
+            // Redirect to the main site for the user
+            return System::redirect(ModUtil::url('IWnotify', 'user', 'loadNotify', array('notifyId' => $notifyId,
+                                'failed' => 1)));
+        }
+
+        // prepare inform form to user view
+        // get fields in case them exist
+        $fields = ModUtil::apiFunc('IWnotify', 'user', 'getAllNotifyFields', array('notifyId' => $notifyId));
+
+        // get inform content
+        $fieldsContent = ModUtil::apiFunc('IWnotify', 'user', 'getNotifyValues', array('notifyId' => $notifyId,
+                    'notifyFieldId' => $validateValue[$notifyId]['notifyFieldId']));
+
+        print '<br /><br />';
+        print_r($fieldsContent);
+
+        print 'No funciona. Falta algun camp que sigui comú a un mateix usuari!';
         die();
     }
 

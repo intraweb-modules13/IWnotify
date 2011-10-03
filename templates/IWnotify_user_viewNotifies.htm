@@ -28,7 +28,12 @@
             <td width="100">
                 <div>
                     <a href="{modurl modname='IWnotify' type='user' func='loadNotify' notifyId=$notify.notifyId}">
-                        {gt text="Access form"}
+                        {gt text="Access inform"}
+                    </a>
+                </div>
+                <div>
+                    <a href="{modurl modname='IWnotify' type='user' func='editNotify' notifyId=$notify.notifyId}">
+                        {gt text="Edit inform"}
                     </a>
                 </div>
                 <div>
@@ -38,12 +43,17 @@
                 </div>
                 <div>
                     <a href="{modurl modname='IWnotify' type='user' func='newNotify' notifyId=$notify.notifyId step=3}">
-                        {gt text="Validation field"}
+                        {gt text="Set validation field"}
                     </a>
                 </div>
                 <div>
                     <a href="{modurl modname='IWnotify' type='user' func='newNotify' notifyId=$notify.notifyId step=4}">
                         {gt text="Format"}
+                    </a>
+                </div>
+                <div>
+                    <a href="{modurl modname='IWnotify' type='user' func='deleteNotify' notifyId=$notify.notifyId}">
+                        {gt text="Delete"}
                     </a>
                 </div>
             </td>

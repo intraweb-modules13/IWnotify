@@ -1,0 +1,23 @@
+{include file="IWnotify_user_menu.htm"}
+<h2>{gt text="Delete a notify"}</h2>
+<form class="z-form" id="deleteNotifyForm" method="post" enctype="multipart/form-data" action="{modurl modname='IWnotify' type='user' func='deleteNotify'}">
+    <input type="hidden" name="csrftoken" value="{insert name='csrftoken'}" />
+    <input type="hidden" name="notifyId" value="{$notify.notifyId}" />
+    <input type="hidden" name="confirm" value="1" />
+
+    <div>
+        {gt text="confirm the deletion of the notify:"} {$notify.notifyTitle}
+    </div>
+    <div class="z-center">
+        <span class="z-buttons">
+            <a title="Import" onClick="javascript:document.forms['deleteNotifyForm'].submit();">
+                {img modname='core' src='button_ok.png' set='icons/small' __alt="Delete" __title="Delete"} {gt text="Delete"}
+            </a>
+        </span>
+        <span class="z-buttons">
+            <a href="{modurl modname='IWnotify' type='user' func='viewNotifies'}">
+                {img modname='core' src='button_cancel.png' set='icons/small' __alt="Cancel" __title="Cancel"} {gt text="Cancel"}
+            </a>
+        </span>
+    </div>
+</form>

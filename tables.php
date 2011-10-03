@@ -24,6 +24,7 @@ function IWnotify_tables() {
         'notifyReturnUrl' => 'iw_notifyReturnUrl',
         'notifyOnlyOnceVisit' => 'iw_notifyOnlyOnceVisit',
         'notifyFailsMsg' => 'iw_notifyFailsMsg',
+        'notifyFormText' => 'notifyFormText',
     );
 
     $tables['IWnotify_definition_column_def'] = array('notifyId' => "I NOTNULL AUTO PRIMARY",
@@ -39,6 +40,7 @@ function IWnotify_tables() {
         'notifyReturnUrl' => "C(180) NOTNULL DEFAULT ''",
         'notifyOnlyOnceVisit' => "I(1) NOTNULL DEFAULT '0'",
         'notifyFailsMsg' => "X NOTNULL",
+        'notifyFormText' => "X NOTNULL",
     );
 
     ObjectUtil::addStandardFieldsToTableDefinition($tables['IWnotify_definition_column'], 'pn_');

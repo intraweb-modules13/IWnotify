@@ -39,8 +39,8 @@
     <div class="z-formrow">
         <label for="notify_notifyCloseDate">{gt text="Close date"}</label>
         <div class="z-formnote">
-            <input size="10" id="notify_notifyCloseDate" name="notifyCloseDate"  onfocus="blur();" />
-            <img id="notifyCloseDate_btn" src="modules/IWmain/images/calendar.gif" value="{$notify.notifyCloseDate}" style="cursor:pointer;" />
+            <input size="10" id="notify_notifyCloseDate" name="notifyCloseDate" value="{$notify.notifyCloseDate}" onfocus="blur();" />
+            <img id="notifyCloseDate_btn" src="modules/IWmain/images/calendar.gif" style="cursor:pointer;" />
         </div>
     </div>
     <div class="z-formrow">
@@ -50,6 +50,10 @@
     <div class="z-formrow">
         <label for="notify_notifyCloseMsg">{gt text="Close message information"}</label>
         <textarea id="notify_notifyCloseMsg" name="notifyCloseMsg">{$notify.notifyCloseMsg}</textarea>
+    </div>
+    <div class="z-formrow">
+        <label for="notify_notifyFormText">{gt text="Notify validate form text"}</label>
+        <textarea id="notify_notifyFormText" name="notifyFormText">{$notify.notifyFormText}</textarea>
     </div>
     <div class="z-formrow">
         <label for="notify_notifyFailsMsg">{gt text="Fails message information"}</label>
