@@ -53,7 +53,9 @@ class IWnotify_Installer extends Zikula_AbstractInstaller {
         $c = $pntable['IWnotify_fields_content_column'];
         if (!DBUtil::createIndex($c['notifyFieldId'], 'IWnotify_fields_content', 'notifyFieldId'))
             return false;
-
+        if (!DBUtil::createIndex($c['notifyRecordId'], 'IWnotify_fields_content', 'notifyRecordId'))
+            return false;
+        
         $c = $pntable['IWnotify_logs_column'];
         if (!DBUtil::createIndex($c['notifyId'], 'IWnotify_logs', 'notifyId'))
             return false;

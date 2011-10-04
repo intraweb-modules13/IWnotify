@@ -59,10 +59,6 @@
         <label for="notify_notifyFailsMsg">{gt text="Fails message information"}</label>
         <textarea id="notify_notifyFailsMsg" name="notifyFailsMsg">{$notify.notifyFailsMsg}</textarea>
     </div>
-    <div class="z-formrow">
-        <label for="notify_notifyOnlyOnceVisit">{gt text="Only can be visited once"}</label>
-        <input type="checkbox" id="notify_notifyOnlyOnceVisit" {if $notify.notifyOnlyOnceVisit eq 1}checked="checked"{/if} name="notifyOnlyOnceVisit" value="1" />
-    </div>
     <div class="z-center">
         <span class="z-buttons">
             <a title="Create" onClick="javascript:createNotify();">

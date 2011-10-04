@@ -22,7 +22,6 @@ function IWnotify_tables() {
         'notifyFormat' => 'iw_notifyFormat',
         'notifyCloseMsg' => 'iw_notifyCloseMsg',
         'notifyReturnUrl' => 'iw_notifyReturnUrl',
-        'notifyOnlyOnceVisit' => 'iw_notifyOnlyOnceVisit',
         'notifyFailsMsg' => 'iw_notifyFailsMsg',
         'notifyFormText' => 'notifyFormText',
     );
@@ -38,7 +37,6 @@ function IWnotify_tables() {
         'notifyFormat' => "X NOTNULL",
         'notifyCloseMsg' => "X NOTNULL",
         'notifyReturnUrl' => "C(180) NOTNULL DEFAULT ''",
-        'notifyOnlyOnceVisit' => "I(1) NOTNULL DEFAULT '0'",
         'notifyFailsMsg' => "X NOTNULL",
         'notifyFormText' => "X NOTNULL",
     );
@@ -84,12 +82,14 @@ function IWnotify_tables() {
         'notifyFieldId' => 'iw_notifyFieldId',
         'notifyId' => 'iw_notifyId',
         'notifyFieldContent' => 'iw_notifyFieldContent',
+        'notifyRecordId' => 'iw_notifyRecordId',
     );
 
     $tables['IWnotify_fields_content_column_def'] = array('notifyFieldContentId' => "I NOTNULL AUTO PRIMARY",
         'notifyFieldId' => "I NOTNULL DEFAULT '0'",
         'notifyId' => "I NOTNULL DEFAULT '0'",
         'notifyFieldContent' => "X NOTNULL",
+        'notifyRecordId' => "I NOTNULL DEFAULT '0'",
     );
 
     ObjectUtil::addStandardFieldsToTableDefinition($tables['IWnotify_fields_content_column'], 'pn_');

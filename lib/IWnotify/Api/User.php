@@ -101,7 +101,6 @@ class IWnotify_Api_User extends Zikula_AbstractApi {
             'notifyType' => $args['notifyType'],
             'notifyCloseMsg' => $args['notifyCloseMsg'],
             'notifyReturnUrl' => $args['notifyReturnUrl'],
-            'notifyOnlyOnceVisit' => $args['notifyOnlyOnceVisit'],
             'notifyFailsMsg' => $args['notifyFailsMsg'],
             'notifyCreator' => UserUtil::getVar('uid'),
         );
@@ -171,6 +170,7 @@ class IWnotify_Api_User extends Zikula_AbstractApi {
         $item = array('notifyId' => $args['notifyId'],
             'notifyFieldId' => $args['notifyFieldId'],
             'notifyFieldContent' => $args['notifyFieldContent'],
+            'notifyRecordId' => $args['notifyRecordId'],
         );
 
         if (!DBUtil::insertObject($item, 'IWnotify_fields_content', 'notifyFieldContentId')) {
@@ -403,17 +403,17 @@ class IWnotify_Api_User extends Zikula_AbstractApi {
             throw new Zikula_Exception_Forbidden();
         }
         $item = array();
-        if (!isset($args['notifyId']) || !$args['notifyId'] > 0 || !isset($args['notifyFieldId']) || !$args['notifyFieldId'] > 0) {
+        if (!isset($args['notifyId']) || !$args['notifyId'] > 0 || !isset($args['notifyRecordId']) || !$args['notifyRecordId'] > 0) {
             return $item;
         }
 
         $pntable = DBUtil::getTables();
         $c = $pntable['IWnotify_fields_content_column'];
 
-        $where = "$c[notifyId] = $args[notifyId] AND $c[notifyFieldId] = $args[notifyFieldId]";
+        $where = "$c[notifyId] = $args[notifyId] AND $c[notifyRecordId] = $args[notifyRecordId]";
 
         // get the objects from the db
-        $items = DBUtil::selectObjectArray('IWnotify_fields_content', $where, '', '-1', '-1', 'notifyFieldContentId');
+        $items = DBUtil::selectObjectArray('IWnotify_fields_content', $where, '', '-1', '-1', 'notifyFieldId');
 
         // Check for an error with the database code, and if so set an appropriate
         if ($items === false)

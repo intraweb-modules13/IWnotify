@@ -1,0 +1,12 @@
+{include file="IWnotify_user_menu.htm"}
+<h2>{$notify.notifyTitle}</h2>
+<div class="notifyResultFormated">
+{$output|nl2br}
+</div>
+{if $notify.notifyReturnUrl neq ''}
+<div>
+    <a href="$notify.notifyReturnUrl">
+        {gt text="Return"}
+    </a>
+</div>
+{/if}

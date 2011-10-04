@@ -1,5 +1,10 @@
 {include file="IWnotify_user_menu.htm"}
 <h2>{$notify.notifyTitle}</h2>
+{if $outOfDate}
+<div>
+    {$notify.notifyCloseMsg|nl2br}
+</div>
+{else}
 <form class="z-form" id="validateForm" method="post" enctype="multipart/form-data" action="{modurl modname='IWnotify' type='user' func='getInform'}">
     <input type="hidden" name="csrftoken" value="{insert name='csrftoken'}" />
     <input type="hidden" name="notifyId" value="{$notify.notifyId}" />
@@ -23,3 +28,4 @@
         </span>
     </div>
 </form>
+{/if}

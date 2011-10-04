@@ -74,7 +74,6 @@ class IWnotify_Controller_User extends Zikula_AbstractController {
                 'notifyOpenDate' => '',
                 'notifyCloseDate' => '',
                 'notifyReturnUrl' => '',
-                'notifyOnlyOnceVisit' => 0,
                 'notifyCloseMsg' => '',
                 'notifyFailsMsg' => '',
                 'notifyFormText' => '',
@@ -148,7 +147,6 @@ class IWnotify_Controller_User extends Zikula_AbstractController {
                 $notifyType = FormUtil::getPassedValue('notifyType', isset($args['notifyType']) ? $args['notifyType'] : 0, 'POST');
                 $notifyCloseMsg = FormUtil::getPassedValue('notifyCloseMsg', isset($args['notifyCloseMsg']) ? $args['notifyCloseMsg'] : null, 'POST');
                 $notifyReturnUrl = FormUtil::getPassedValue('notifyReturnUrl', isset($args['notifyReturnUrl']) ? $args['notifyReturnUrl'] : null, 'POST');
-                $notifyOnlyOnceVisit = FormUtil::getPassedValue('notifyOnlyOnceVisit', isset($args['notifyOnlyOnceVisit']) ? $args['notifyOnlyOnceVisit'] : 0, 'POST');
                 $notifyFailsMsg = FormUtil::getPassedValue('notifyFailsMsg', isset($args['notifyFailsMsg']) ? $args['notifyFailsMsg'] : null, 'POST');
                 $notifyFormText = FormUtil::getPassedValue('notifyFormText', isset($args['notifyFormText']) ? $args['notifyFormText'] : null, 'POST');
 
@@ -159,7 +157,6 @@ class IWnotify_Controller_User extends Zikula_AbstractController {
                             'notifyType' => $notifyType,
                             'notifyCloseMsg' => $notifyCloseMsg,
                             'notifyReturnUrl' => $notifyReturnUrl,
-                            'notifyOnlyOnceVisit' => $notifyOnlyOnceVisit,
                             'notifyFailsMsg' => $notifyFailsMsg,
                             'notifyFormText' => $notifyFormText,
                         ));
@@ -275,6 +272,7 @@ class IWnotify_Controller_User extends Zikula_AbstractController {
                             $fieldContent = ModUtil::apiFunc('IWnotify', 'user', 'fillField', array('notifyId' => $notifyId,
                                         'notifyFieldId' => $fieldsCreatedArray[$j],
                                         'notifyFieldContent' => $content,
+                                        'notifyRecordId' => $i,
                                     ));
                             if (!$fieldContent) {
                                 LogUtil::registerError($this->__("Error filling field content: " . $content));
@@ -358,6 +356,10 @@ class IWnotify_Controller_User extends Zikula_AbstractController {
         if ($notify['notifyCreator'] != UserUtil::getVar('uid') && !SecurityUtil::checkPermission('IWnotify::', "::", ACCESS_ADMIN)) {
             throw new Zikula_Exception_Forbidden();
         }
+
+        $notify['notifyOpenDate'] = DateUtil::formatDatetime($notify['notifyOpenDate'], '%d/%m/%y');
+        $notify['notifyCloseDate'] = DateUtil::formatDatetime($notify['notifyCloseDate'], '%d/%m/%y');
+
         return $this->view->assign('step', 1)
                         ->assign('notify', $notify)
                         ->assign('func', 'updateNotify')
@@ -373,7 +375,6 @@ class IWnotify_Controller_User extends Zikula_AbstractController {
         $notifyType = FormUtil::getPassedValue('notifyType', isset($args['notifyType']) ? $args['notifyType'] : 0, 'POST');
         $notifyCloseMsg = FormUtil::getPassedValue('notifyCloseMsg', isset($args['notifyCloseMsg']) ? $args['notifyCloseMsg'] : null, 'POST');
         $notifyReturnUrl = FormUtil::getPassedValue('notifyReturnUrl', isset($args['notifyReturnUrl']) ? $args['notifyReturnUrl'] : null, 'POST');
-        $notifyOnlyOnceVisit = FormUtil::getPassedValue('notifyOnlyOnceVisit', isset($args['notifyOnlyOnceVisit']) ? $args['notifyOnlyOnceVisit'] : 0, 'POST');
         $notifyFailsMsg = FormUtil::getPassedValue('notifyFailsMsg', isset($args['notifyFailsMsg']) ? $args['notifyFailsMsg'] : null, 'POST');
         $notifyFormText = FormUtil::getPassedValue('notifyFormText', isset($args['notifyFormText']) ? $args['notifyFormText'] : null, 'POST');
 
@@ -401,7 +402,6 @@ class IWnotify_Controller_User extends Zikula_AbstractController {
                         'notifyType' => $notifyType,
                         'notifyCloseMsg' => $notifyCloseMsg,
                         'notifyReturnUrl' => $notifyReturnUrl,
-                        'notifyOnlyOnceVisit' => $notifyOnlyOnceVisit,
                         'notifyFailsMsg' => $notifyFailsMsg,
                         'notifyFormText' => $notifyFormText,
                     ),
@@ -432,6 +432,8 @@ class IWnotify_Controller_User extends Zikula_AbstractController {
             throw new Zikula_Exception_Forbidden();
         }
 
+        $outOfDate = false;
+
         $notify = ModUtil::apiFunc('IWnotify', 'user', 'getNotify', array('notifyId' => $notifyId));
         if (!$notify) {
             LogUtil::registerError($this->__('Error getting notify inform.'));
@@ -439,8 +441,14 @@ class IWnotify_Controller_User extends Zikula_AbstractController {
             return System::redirect(ModUtil::url('IWnotify', 'user', 'viewNotifies'));
         }
 
+        // check if it is a valid date
+        if (($notify['notifyOpenDate'] != '' && time() < DateUtil::makeTimestamp($notify['notifyOpenDate'])) || ($notify['notifyCloseDate'] != '' && time() > DateUtil::makeTimestamp($notify['notifyCloseDate']))) {
+            $outOfDate = true;
+        }
+
         return $this->view->assign('notify', $notify)
                         ->assign('failed', $failed)
+                        ->assign('outOfDate', $outOfDate)
                         ->fetch('IWnotify_user_openNotify.htm');
     }
 
@@ -521,20 +529,32 @@ class IWnotify_Controller_User extends Zikula_AbstractController {
             return System::redirect(ModUtil::url('IWnotify', 'user', 'loadNotify', array('notifyId' => $notifyId,
                                 'failed' => 1)));
         }
-
         // prepare inform form to user view
+        // get inform
+        $notify = ModUtil::apiFunc('IWnotify', 'user', 'getNotify', array('notifyId' => $notifyId));
+
+        if (!$notify) {
+            LogUtil::registerError($this->__('Error getting notify inform.'));
+            // Redirect to the main site for the user
+            return System::redirect(ModUtil::url('IWnotify', 'user', 'viewNotifies'));
+        }
+
         // get fields in case them exist
         $fields = ModUtil::apiFunc('IWnotify', 'user', 'getAllNotifyFields', array('notifyId' => $notifyId));
 
         // get inform content
         $fieldsContent = ModUtil::apiFunc('IWnotify', 'user', 'getNotifyValues', array('notifyId' => $notifyId,
-                    'notifyFieldId' => $validateValue[$notifyId]['notifyFieldId']));
+                    'notifyRecordId' => $validateValue[$notifyId]['notifyRecordId']));
 
-        print '<br /><br />';
-        print_r($fieldsContent);
+        $output = $notify['notifyFormat'];
 
-        print 'No funciona. Falta algun camp que sigui comú a un mateix usuari!';
-        die();
+        foreach ($fields as $field) {
+            $output = str_replace('$$' . $field['notifyFieldName'] . '$$', trim($fieldsContent[$field['notifyFieldId']]['notifyFieldContent']), $output);
+        }
+
+        return $this->view->assign('notify', $notify)
+                        ->assign('output', $output)
+                        ->fetch('IWnotify_user_getInform.htm');
     }
 
 }
