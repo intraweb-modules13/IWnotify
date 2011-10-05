@@ -13,12 +13,27 @@
         {$notify.notifyFailsMsg|nl2br}
     </div>
     {/if}
+    {if $errorMsg neq ''}
+    <div class="z-errormsg">
+        {$errorMsg}
+    </div>
+    {/if}
     <div class="notifyFormText">
         {$notify.notifyFormText|nl2br}
     </div>
     <div class="z-formrow">
         <label for="notify_validateData">{gt text="Enter validation data"}</label>
-        <input type="text" id="notify_validate" name="validateData" />
+        <input type="text" id="notify_validateData" name="validateData" />
+    </div>
+    <div class="z-formrow">
+        <label for="notify_validateSecAns">{gt text="Solve this equation"}</label>
+        <div class="z-formnote">
+            {$secVal1} {$secOperator} {$secVal2} =
+            <input type="text" id="notify_validateSecAns" name="validateSecAns" />
+        </div>
+        <div class="z-formnote z-informationmsg">
+            {gt text="You have to solve this security question in order to prevent automatical get of data."}
+        </div>
     </div>
     <div class="z-center">
         <span class="z-buttons">

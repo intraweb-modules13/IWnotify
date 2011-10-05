@@ -150,6 +150,9 @@ class IWnotify_Controller_User extends Zikula_AbstractController {
                 $notifyFailsMsg = FormUtil::getPassedValue('notifyFailsMsg', isset($args['notifyFailsMsg']) ? $args['notifyFailsMsg'] : null, 'POST');
                 $notifyFormText = FormUtil::getPassedValue('notifyFormText', isset($args['notifyFormText']) ? $args['notifyFormText'] : null, 'POST');
 
+                $notifyOpenDate = '20' . substr($notifyOpenDate, 6, 2) . '-' . substr($notifyOpenDate, 3, 2) . '-' . substr($notifyOpenDate, 0, 2) . ' 00:00:00';
+                $notifyCloseDate = '20' . substr($notifyCloseDate, 6, 2) . '-' . substr($notifyCloseDate, 3, 2) . '-' . substr($notifyCloseDate, 0, 2) . ' 00:00:00';
+
                 $created = ModUtil::apiFunc('IWnotify', 'user', 'createNotify', array('notifyTitle' => $notifyTitle,
                             'notifyDescription' => $notifyDescription,
                             'notifyOpenDate' => $notifyOpenDate,
@@ -392,6 +395,9 @@ class IWnotify_Controller_User extends Zikula_AbstractController {
             return System::redirect(ModUtil::url('IWnotify', 'user', 'viewNotifies'));
         }
 
+        $notifyOpenDate = '20' . substr($notifyOpenDate, 6, 2) . '-' . substr($notifyOpenDate, 3, 2) . '-' . substr($notifyOpenDate, 0, 2) . ' 00:00:00';
+        $notifyCloseDate = '20' . substr($notifyCloseDate, 6, 2) . '-' . substr($notifyCloseDate, 3, 2) . '-' . substr($notifyCloseDate, 0, 2) . ' 00:00:00';
+
         if (!ModUtil::apiFunc('IWnotify', 'user', 'editNotify', array(
                     'notifyId' => $notifyId,
                     'items' => array(
@@ -426,6 +432,7 @@ class IWnotify_Controller_User extends Zikula_AbstractController {
     public function loadNotify($args) {
         $notifyId = FormUtil::getPassedValue('notifyId', isset($args['notifyId']) ? $args['notifyId'] : 0, 'GETPOST');
         $failed = FormUtil::getPassedValue('failed', isset($args['failed']) ? $args['failed'] : 0, 'GETPOST');
+        $errorMsg = FormUtil::getPassedValue('errorMsg', isset($args['errorMsg']) ? $args['errorMsg'] : 0, 'GETPOST');
 
         // Security check
         if (!SecurityUtil::checkPermission('IWnotify::', "::", ACCESS_READ)) {
@@ -446,9 +453,32 @@ class IWnotify_Controller_User extends Zikula_AbstractController {
             $outOfDate = true;
         }
 
+        $operators = array('+', '-', '*');
+        $secVal1 = rand(1, 9);
+        $secOperator = $operators[rand(0, 2)];
+        $secVal2 = rand(1, 9);
+
+        switch ($secOperator) {
+            case '+':
+                $result = $secVal1 + $secVal2;
+                break;
+            case '-':
+                $result = $secVal1 - $secVal2;
+                break;
+            case '*':
+                $result = $secVal1 * $secVal2;
+                break;
+        }
+
+        SessionUtil::setVar('secResult', $result);
+
         return $this->view->assign('notify', $notify)
                         ->assign('failed', $failed)
+                        ->assign('errorMsg', $errorMsg)
                         ->assign('outOfDate', $outOfDate)
+                        ->assign('secVal1', $secVal1)
+                        ->assign('secVal2', $secVal2)
+                        ->assign('secOperator', $secOperator)
                         ->fetch('IWnotify_user_openNotify.htm');
     }
 
@@ -495,6 +525,7 @@ class IWnotify_Controller_User extends Zikula_AbstractController {
     public function getInform($args) {
         $notifyId = FormUtil::getPassedValue('notifyId', isset($args['notifyId']) ? $args['notifyId'] : 0, 'POST');
         $validateData = FormUtil::getPassedValue('validateData', isset($args['validateData']) ? $args['validateData'] : 0, 'POST');
+        $validateSecAns = FormUtil::getPassedValue('validateSecAns', isset($args['validateSecAns']) ? $args['validateSecAns'] : null, 'POST');
 
         // Security check
         if (!SecurityUtil::checkPermission('IWnotify::', "::", ACCESS_READ)) {
@@ -504,10 +535,20 @@ class IWnotify_Controller_User extends Zikula_AbstractController {
         // Confirm authorisation code
         $this->checkCsrfToken();
 
+        $errorMsg = '';
+
         if ($validateData == '') {
-            LogUtil::registerError($this->__('Error! Please enter the required validation value.'));
+            $errorMsg = $this->__('<p>Error! Please enter the required validation value.</p>');
+        }
+
+        if ($validateSecAns != SessionUtil::getVar('secResult', $result)) {
+            $errorMsg .= $this->__('<p>Error! The security equation value is not correct.</p>');
+        }
+
+        if ($errorMsg != '') {
             // Redirect to the main site for the user
-            return System::redirect(ModUtil::url('IWnotify', 'user', 'loadNotify', array('notifyId' => $notifyId)));
+            return System::redirect(ModUtil::url('IWnotify', 'user', 'loadNotify', array('notifyId' => $notifyId,
+                                'errorMsg' => $errorMsg)));
         }
 
         // get notify inform validation field
@@ -529,6 +570,9 @@ class IWnotify_Controller_User extends Zikula_AbstractController {
             return System::redirect(ModUtil::url('IWnotify', 'user', 'loadNotify', array('notifyId' => $notifyId,
                                 'failed' => 1)));
         }
+
+        SessionUtil::delVar('secResult');
+
         // prepare inform form to user view
         // get inform
         $notify = ModUtil::apiFunc('IWnotify', 'user', 'getNotify', array('notifyId' => $notifyId));
