@@ -634,10 +634,7 @@ class IWnotify_Controller_User extends Zikula_AbstractController {
                         ->fetch('IWnotify_user_getInform.htm');
     }
 
-    public function getIp($args) {
-        $notifyId = FormUtil::getPassedValue('notifyId', isset($args['notifyId']) ? $args['notifyId'] : 0, 'POST');
-        $validateData = FormUtil::getPassedValue('validateData', isset($args['validateData']) ? $args['validateData'] : 0, 'POST');
-        $validateSecAns = FormUtil::getPassedValue('validateSecAns', isset($args['validateSecAns']) ? $args['validateSecAns'] : null, 'POST');
+    public function getIp() {
 
         // Security check
         if (!SecurityUtil::checkPermission('IWnotify::', "::", ACCESS_READ)) {
@@ -645,16 +642,63 @@ class IWnotify_Controller_User extends Zikula_AbstractController {
         }
         $ip = '';
         if (!empty($_SERVER['REMOTE_ADDR'])) {
-            $ip = ModUtil::func('IWstats', 'user', 'cleanremoteaddr', array('originaladdr' => $_SERVER['REMOTE_ADDR']));
+            $ip = ModUtil::func('IWnotify', 'user', 'cleanremoteaddr', array('originaladdr' => $_SERVER['REMOTE_ADDR']));
         }
         if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
-            $ip = ModUtil::func('IWstats', 'user', 'cleanremoteaddr', array('originaladdr' => $_SERVER['HTTP_X_FORWARDED_FOR']));
+            $ip = ModUtil::func('IWnotify', 'user', 'cleanremoteaddr', array('originaladdr' => $_SERVER['HTTP_X_FORWARDED_FOR']));
         }
         if (!empty($_SERVER['HTTP_CLIENT_IP'])) {
-            $ip = ModUtil::func('IWstats', 'user', 'cleanremoteaddr', array('originaladdr' => $_SERVER['HTTP_CLIENT_IP']));
+            $ip = ModUtil::func('IWnotify', 'user', 'cleanremoteaddr', array('originaladdr' => $_SERVER['HTTP_CLIENT_IP']));
         }
 
         return $ip;
+    }
+
+    public function cleanremoteaddr($args) {
+        $originaladdr = $args['originaladdr'];
+        $matches = array();
+        // first get all things that look like IP addresses.
+        if (!preg_match_all('/(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})/', $args['originaladdr'], $matches, PREG_SET_ORDER)) {
+            return '';
+        }
+        $goodmatches = array();
+        $lanmatches = array();
+        foreach ($matches as $match) {
+            // check to make sure it's not an internal address.
+            // the following are reserved for private lans...
+            // 10.0.0.0 - 10.255.255.255
+            // 172.16.0.0 - 172.31.255.255
+            // 192.168.0.0 - 192.168.255.255
+            // 169.254.0.0 -169.254.255.255
+            $bits = explode('.', $match[0]);
+            if (count($bits) != 4) {
+                // weird, preg match shouldn't give us it.
+                continue;
+            }
+            if (($bits[0] == 10)
+                    || ($bits[0] == 172 && $bits[1] >= 16 && $bits[1] <= 31)
+                    || ($bits[0] == 192 && $bits[1] == 168)
+                    || ($bits[0] == 169 && $bits[1] == 254)) {
+                $lanmatches[] = $match[0];
+                continue;
+            }
+            // finally, it's ok
+            $goodmatches[] = $match[0];
+        }
+        if (!count($goodmatches)) {
+            // perhaps we have a lan match, it's probably better to return that.
+            if (!count($lanmatches)) {
+                return '';
+            } else {
+                return array_pop($lanmatches);
+            }
+        }
+        if (count($goodmatches) == 1) {
+            return $goodmatches[0];
+        }
+
+        // We need to return something, so return the first
+        return array_pop($goodmatches);
     }
 
 }
