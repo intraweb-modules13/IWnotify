@@ -431,8 +431,7 @@ class IWnotify_Controller_User extends Zikula_AbstractController {
 
     public function loadNotify($args) {
         $notifyId = FormUtil::getPassedValue('notifyId', isset($args['notifyId']) ? $args['notifyId'] : 0, 'GETPOST');
-        $failed = FormUtil::getPassedValue('failed', isset($args['failed']) ? $args['failed'] : 0, 'GETPOST');
-        $errorMsg = FormUtil::getPassedValue('errorMsg', isset($args['errorMsg']) ? $args['errorMsg'] : 0, 'GETPOST');
+        $errorMsgCode = FormUtil::getPassedValue('errorMsgCode', isset($args['errorMsgCode']) ? $args['errorMsgCode'] : 0, 'GETPOST');
 
         // Security check
         if (!SecurityUtil::checkPermission('IWnotify::', "::", ACCESS_READ)) {
@@ -450,6 +449,14 @@ class IWnotify_Controller_User extends Zikula_AbstractController {
 
         // check if it is a valid date
         if (($notify['notifyOpenDate'] != '' && time() < DateUtil::makeTimestamp($notify['notifyOpenDate'])) || ($notify['notifyCloseDate'] != '' && time() > DateUtil::makeTimestamp($notify['notifyCloseDate']))) {
+            $notifyLogIp = ModUtil::func('IWnotify', 'user', 'getIp');
+            $userId = (UserUtil::isLoggedIn()) ? UserUtil::getVar('uid') : '-1';
+            ModUtil::apiFunc('IWnotify', 'user', 'saveLog', array('notifyId' => $notifyId,
+                'logType' => -1,
+                'notifyLogIp' => $notifyLogIp,
+                'userId' => $userId,
+                'validateData' => '',
+            ));
             $outOfDate = true;
         }
 
@@ -473,8 +480,7 @@ class IWnotify_Controller_User extends Zikula_AbstractController {
         SessionUtil::setVar('secResult', $result);
 
         return $this->view->assign('notify', $notify)
-                        ->assign('failed', $failed)
-                        ->assign('errorMsg', $errorMsg)
+                        ->assign('errorMsgCode', $errorMsgCode)
                         ->assign('outOfDate', $outOfDate)
                         ->assign('secVal1', $secVal1)
                         ->assign('secVal2', $secVal2)
@@ -535,20 +541,34 @@ class IWnotify_Controller_User extends Zikula_AbstractController {
         // Confirm authorisation code
         $this->checkCsrfToken();
 
-        $errorMsg = '';
+        $errorMsgCode = 0;
+        $logType = 0;
+
+        // get user IP
+        $notifyLogIp = ModUtil::func('IWnotify', 'user', 'getIp');
+
+        $userId = (UserUtil::isLoggedIn()) ? UserUtil::getVar('uid') : '-1';
 
         if ($validateData == '') {
-            $errorMsg = $this->__('<p>Error! Please enter the required validation value.</p>');
+            $errorMsgCode = 1;
+            $logType = -4;
         }
 
-        if ($validateSecAns != SessionUtil::getVar('secResult', $result)) {
-            $errorMsg .= $this->__('<p>Error! The security equation value is not correct.</p>');
+        if ($validateSecAns != SessionUtil::getVar('secResult')) {
+            $errorMsgCode = 2;
+            $logType = -2;
         }
 
-        if ($errorMsg != '') {
+        if ($errorMsgCode != 0) {
+            ModUtil::apiFunc('IWnotify', 'user', 'saveLog', array('notifyId' => $notifyId,
+                'logType' => $logType,
+                'notifyLogIp' => $notifyLogIp,
+                'userId' => $userId,
+                'validateData' => $validateData,
+            ));
             // Redirect to the main site for the user
             return System::redirect(ModUtil::url('IWnotify', 'user', 'loadNotify', array('notifyId' => $notifyId,
-                                'errorMsg' => $errorMsg)));
+                                'errorMsgCode' => $errorMsgCode)));
         }
 
         // get notify inform validation field
@@ -566,9 +586,15 @@ class IWnotify_Controller_User extends Zikula_AbstractController {
                     'notifyFieldContent' => $validateData));
 
         if (!$validateValue || strtolower($validateData) != strtolower($validateValue[$notifyId]['notifyFieldContent'])) {
+            ModUtil::apiFunc('IWnotify', 'user', 'saveLog', array('notifyId' => $notifyId,
+                'logType' => -3,
+                'notifyLogIp' => $notifyLogIp,
+                'userId' => $userId,
+                'validateData' => $validateData,
+            ));
             // Redirect to the main site for the user
             return System::redirect(ModUtil::url('IWnotify', 'user', 'loadNotify', array('notifyId' => $notifyId,
-                                'failed' => 1)));
+                                'errorMsgCode' => 3)));
         }
 
         SessionUtil::delVar('secResult');
@@ -596,9 +622,39 @@ class IWnotify_Controller_User extends Zikula_AbstractController {
             $output = str_replace('$$' . $field['notifyFieldName'] . '$$', trim($fieldsContent[$field['notifyFieldId']]['notifyFieldContent']), $output);
         }
 
+        ModUtil::apiFunc('IWnotify', 'user', 'saveLog', array('notifyId' => $notifyId,
+            'logType' => 1,
+            'notifyLogIp' => $notifyLogIp,
+            'userId' => $userId,
+            'validateData' => $validateData,
+        ));
+
         return $this->view->assign('notify', $notify)
                         ->assign('output', $output)
                         ->fetch('IWnotify_user_getInform.htm');
+    }
+
+    public function getIp($args) {
+        $notifyId = FormUtil::getPassedValue('notifyId', isset($args['notifyId']) ? $args['notifyId'] : 0, 'POST');
+        $validateData = FormUtil::getPassedValue('validateData', isset($args['validateData']) ? $args['validateData'] : 0, 'POST');
+        $validateSecAns = FormUtil::getPassedValue('validateSecAns', isset($args['validateSecAns']) ? $args['validateSecAns'] : null, 'POST');
+
+        // Security check
+        if (!SecurityUtil::checkPermission('IWnotify::', "::", ACCESS_READ)) {
+            throw new Zikula_Exception_Forbidden();
+        }
+        $ip = '';
+        if (!empty($_SERVER['REMOTE_ADDR'])) {
+            $ip = ModUtil::func('IWstats', 'user', 'cleanremoteaddr', array('originaladdr' => $_SERVER['REMOTE_ADDR']));
+        }
+        if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+            $ip = ModUtil::func('IWstats', 'user', 'cleanremoteaddr', array('originaladdr' => $_SERVER['HTTP_X_FORWARDED_FOR']));
+        }
+        if (!empty($_SERVER['HTTP_CLIENT_IP'])) {
+            $ip = ModUtil::func('IWstats', 'user', 'cleanremoteaddr', array('originaladdr' => $_SERVER['HTTP_CLIENT_IP']));
+        }
+
+        return $ip;
     }
 
 }

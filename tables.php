@@ -98,14 +98,19 @@ function IWnotify_tables() {
     $tables['IWnotify_logs'] = DBUtil::getLimitedTablename('IWnotify_logs');
     $tables['IWnotify_logs_column'] = array('notifyLogId' => 'iw_notifyLogId',
         'notifyId' => 'iw_notifyId',
-        'notifyLogDate' => 'iw_notifyLodDate',
+        'userId' => 'iw_userId',
         'notifyLogIp' => 'iw_notifyLogIp',
+        'logType' => 'iw_logType',
+        'enteredValue' => 'iw_enteredValue',
+        // -1: close date / -2: incorrect security value / -3: data not found -4: empty validation value / 1: value returned correctly
     );
 
     $tables['IWnotify_logs_column_def'] = array('notifyLogId' => "I NOTNULL AUTO PRIMARY",
         'notifyId' => "I NOTNULL DEFAULT '0'",
-        'notifyLogDate' => "T DEFDATETIME NOTNULL DEFAULT '1970-01-01 00:00:00'",
+        'userId' => "I NOTNULL DEFAULT '0'",
         'notifyLogIp' => "C(15) NOTNULL DEFAULT ''",
+        'logType' => "I(1) NOTNULL DEFAULT '0'",
+        'enteredValue' => "C(30) NOTNULL DEFAULT ''",
     );
 
     ObjectUtil::addStandardFieldsToTableDefinition($tables['IWnotify_logs_column'], 'pn_');

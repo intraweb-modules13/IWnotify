@@ -423,4 +423,34 @@ class IWnotify_Api_User extends Zikula_AbstractApi {
         return $items;
     }
 
+    public function saveLog($args) {
+        // security check
+        if (!SecurityUtil::checkPermission('IWnotify::', "::", ACCESS_READ)) {
+            throw new Zikula_Exception_Forbidden();
+        }
+
+        $item = array('notifyId' => $args['notifyId'],
+            'logType' => $args['logType'],
+            'notifyLogIp' => $args['notifyLogIp'],
+            'userId' => $args['userId'],
+            'enteredValue' => $args['validateData'],
+
+        );
+
+        if (!DBUtil::insertObject($item, 'IWnotify_logs', 'notifyLogId')) {
+            return LogUtil::registerError($this->__("L'intent de creació ha fallat."));
+        }
+        // Return the id of the newly created item to the calling process
+        return $item['notifyLogId'];
+    }
+
+    /*
+      ModUtil::apiFunc('IWnotify', 'user', 'saveLog', array('notifyId' => $notifyId,
+      'logType' => $logType,
+      'notifyLogIp' => $notifyLogIp,
+      'userId' => $userId,
+      'validateData' => $validateData,
+      ));
+     * 
+     */
 }

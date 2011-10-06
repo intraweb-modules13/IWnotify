@@ -8,14 +8,17 @@
 <form class="z-form" id="validateForm" method="post" enctype="multipart/form-data" action="{modurl modname='IWnotify' type='user' func='getInform'}">
     <input type="hidden" name="csrftoken" value="{insert name='csrftoken'}" />
     <input type="hidden" name="notifyId" value="{$notify.notifyId}" />
-    {if $failed eq 1}
+    {if $errorMsgCode neq 0}
     <div class="z-errormsg">
+        {if $errorMsgCode eq 1}
+        {gt text="Error! Please enter the required validation value."}
+        {/if}
+        {if $errorMsgCode eq 2}
+        {gt text="Error! The security equation value is not correct."}
+        {/if}
+        {if $errorMsgCode eq 3}
         {$notify.notifyFailsMsg|nl2br}
-    </div>
-    {/if}
-    {if $errorMsg neq ''}
-    <div class="z-errormsg">
-        {$errorMsg}
+        {/if}
     </div>
     {/if}
     <div class="notifyFormText">
