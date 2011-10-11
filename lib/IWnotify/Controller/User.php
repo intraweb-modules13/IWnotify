@@ -449,14 +449,19 @@ class IWnotify_Controller_User extends Zikula_AbstractController {
 
         // check if it is a valid date
         if (($notify['notifyOpenDate'] != '' && time() < DateUtil::makeTimestamp($notify['notifyOpenDate'])) || ($notify['notifyCloseDate'] != '' && time() > DateUtil::makeTimestamp($notify['notifyCloseDate']))) {
-            $notifyLogIp = ModUtil::func('IWnotify', 'user', 'getIp');
-            $userId = (UserUtil::isLoggedIn()) ? UserUtil::getVar('uid') : '-1';
-            ModUtil::apiFunc('IWnotify', 'user', 'saveLog', array('notifyId' => $notifyId,
-                'logType' => -1,
-                'notifyLogIp' => $notifyLogIp,
-                'userId' => $userId,
-                'validateData' => '',
+
+            $actionText = $this->__f("Request out of data. Current date '%s'", DateUtil::getDatetime(time(), '%d/%m/%Y'));
+            $sv = ModUtil::func('IWmain', 'user', 'genSecurityValue');
+            ModUtil::apiFunc('IWmain', 'user', 'saveLog', array('moduleName' => 'IWnotify',
+                'indexName' => 'notifyId',
+                'indexValue' => $notifyId,
+                'error' => 1,
+                'actionType' => 4,
+                'visible' => 0,
+                'actionText' => $actionText,
+                'sv' => $sv,
             ));
+
             $outOfDate = true;
         }
 
@@ -542,35 +547,31 @@ class IWnotify_Controller_User extends Zikula_AbstractController {
         $this->checkCsrfToken();
 
         $errorMsgCode = 0;
-        $logType = 0;
-
-        // get user IP
-        $notifyLogIp = ModUtil::func('IWnotify', 'user', 'getIp');
-
-        $userId = (UserUtil::isLoggedIn()) ? UserUtil::getVar('uid') : '-1';
 
         if ($validateData == '') {
             $errorMsgCode = 1;
-            $logType = -4;
+            $actionText = $this->__("User has not entered validation data");
         }
 
         if ($validateSecAns != SessionUtil::getVar('secResult')) {
             $errorMsgCode = 2;
-            $logType = -2;
+            $actionText = $this->__f("The security answer does not match. The validation data used was '%s'", $validateData);
         }
-
         if ($errorMsgCode != 0) {
-            ModUtil::apiFunc('IWnotify', 'user', 'saveLog', array('notifyId' => $notifyId,
-                'logType' => $logType,
-                'notifyLogIp' => $notifyLogIp,
-                'userId' => $userId,
-                'validateData' => $validateData,
+            $sv = ModUtil::func('IWmain', 'user', 'genSecurityValue');
+            ModUtil::apiFunc('IWmain', 'user', 'saveLog', array('moduleName' => 'IWnotify',
+                'indexName' => 'notifyId',
+                'indexValue' => $notifyId,
+                'actionType' => 4,
+                'error' => 1,
+                'visible' => 0,
+                'actionText' => $actionText,
+                'sv' => $sv,
             ));
             // Redirect to the main site for the user
             return System::redirect(ModUtil::url('IWnotify', 'user', 'loadNotify', array('notifyId' => $notifyId,
                                 'errorMsgCode' => $errorMsgCode)));
         }
-
         // get notify inform validation field
         $validationField = ModUtil::apiFunc('IWnotify', 'user', 'getNotifyValidationField', array('notifyId' => $notifyId));
 
@@ -586,12 +587,18 @@ class IWnotify_Controller_User extends Zikula_AbstractController {
                     'notifyFieldContent' => $validateData));
 
         if (!$validateValue || strtolower($validateData) != strtolower($validateValue[$notifyId]['notifyFieldContent'])) {
-            ModUtil::apiFunc('IWnotify', 'user', 'saveLog', array('notifyId' => $notifyId,
-                'logType' => -3,
-                'notifyLogIp' => $notifyLogIp,
-                'userId' => $userId,
-                'validateData' => $validateData,
+            $actionText = $this->__f("The validation data was not correct. The validation data used was '%s'", $validateData);
+            $sv = ModUtil::func('IWmain', 'user', 'genSecurityValue');
+            ModUtil::apiFunc('IWmain', 'user', 'saveLog', array('moduleName' => 'IWnotify',
+                'indexName' => 'notifyId',
+                'indexValue' => $notifyId,
+                'actionType' => 4,
+                'error' => 1,
+                'visible' => 0,
+                'actionText' => $actionText,
+                'sv' => $sv,
             ));
+
             // Redirect to the main site for the user
             return System::redirect(ModUtil::url('IWnotify', 'user', 'loadNotify', array('notifyId' => $notifyId,
                                 'errorMsgCode' => 3)));
@@ -622,83 +629,20 @@ class IWnotify_Controller_User extends Zikula_AbstractController {
             $output = str_replace('$$' . $field['notifyFieldName'] . '$$', trim($fieldsContent[$field['notifyFieldId']]['notifyFieldContent']), $output);
         }
 
-        ModUtil::apiFunc('IWnotify', 'user', 'saveLog', array('notifyId' => $notifyId,
-            'logType' => 1,
-            'notifyLogIp' => $notifyLogIp,
-            'userId' => $userId,
-            'validateData' => $validateData,
+        $actionText = $this->__f("Data correctly requested. The validation data used was '%s'", $validateData);
+        $sv = ModUtil::func('IWmain', 'user', 'genSecurityValue');
+        ModUtil::apiFunc('IWmain', 'user', 'saveLog', array('moduleName' => 'IWnotify',
+            'indexName' => 'notifyId',
+            'indexValue' => $notifyId,
+            'actionType' => 4,
+            'visible' => 0,
+            'actionText' => $actionText,
+            'sv' => $sv,
         ));
 
         return $this->view->assign('notify', $notify)
                         ->assign('output', $output)
                         ->fetch('IWnotify_user_getInform.htm');
-    }
-
-    public function getIp() {
-
-        // Security check
-        if (!SecurityUtil::checkPermission('IWnotify::', "::", ACCESS_READ)) {
-            throw new Zikula_Exception_Forbidden();
-        }
-        $ip = '';
-        if (!empty($_SERVER['REMOTE_ADDR'])) {
-            $ip = ModUtil::func('IWnotify', 'user', 'cleanremoteaddr', array('originaladdr' => $_SERVER['REMOTE_ADDR']));
-        }
-        if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
-            $ip = ModUtil::func('IWnotify', 'user', 'cleanremoteaddr', array('originaladdr' => $_SERVER['HTTP_X_FORWARDED_FOR']));
-        }
-        if (!empty($_SERVER['HTTP_CLIENT_IP'])) {
-            $ip = ModUtil::func('IWnotify', 'user', 'cleanremoteaddr', array('originaladdr' => $_SERVER['HTTP_CLIENT_IP']));
-        }
-
-        return $ip;
-    }
-
-    public function cleanremoteaddr($args) {
-        $originaladdr = $args['originaladdr'];
-        $matches = array();
-        // first get all things that look like IP addresses.
-        if (!preg_match_all('/(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})/', $args['originaladdr'], $matches, PREG_SET_ORDER)) {
-            return '';
-        }
-        $goodmatches = array();
-        $lanmatches = array();
-        foreach ($matches as $match) {
-            // check to make sure it's not an internal address.
-            // the following are reserved for private lans...
-            // 10.0.0.0 - 10.255.255.255
-            // 172.16.0.0 - 172.31.255.255
-            // 192.168.0.0 - 192.168.255.255
-            // 169.254.0.0 -169.254.255.255
-            $bits = explode('.', $match[0]);
-            if (count($bits) != 4) {
-                // weird, preg match shouldn't give us it.
-                continue;
-            }
-            if (($bits[0] == 10)
-                    || ($bits[0] == 172 && $bits[1] >= 16 && $bits[1] <= 31)
-                    || ($bits[0] == 192 && $bits[1] == 168)
-                    || ($bits[0] == 169 && $bits[1] == 254)) {
-                $lanmatches[] = $match[0];
-                continue;
-            }
-            // finally, it's ok
-            $goodmatches[] = $match[0];
-        }
-        if (!count($goodmatches)) {
-            // perhaps we have a lan match, it's probably better to return that.
-            if (!count($lanmatches)) {
-                return '';
-            } else {
-                return array_pop($lanmatches);
-            }
-        }
-        if (count($goodmatches) == 1) {
-            return $goodmatches[0];
-        }
-
-        // We need to return something, so return the first
-        return array_pop($goodmatches);
     }
 
 }
